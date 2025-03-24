@@ -4,10 +4,11 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const isLogin = ref(true) // true为登录模式，false为注册模式
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const errorMessage = ref('')
+const username = ref('')
 
 // 从localStorage获取用户数据
 const getUsers = () => {
@@ -22,13 +23,13 @@ const saveUsers = (users) => {
 
 // 登录处理
 const handleLogin = () => {
-  if (!username.value || !password.value) {
-    errorMessage.value = '请填写用户名和密码'
+  if (!email.value || !password.value) {
+    errorMessage.value = '请填写邮箱和密码'
     return
   }
 
   const users = getUsers()
-  const user = users.find(u => u.username === username.value && u.password === password.value)
+  const user = users.find(u => u.email === email.value && u.password === password.value)
 
   if (user) {
     // 保存登录状态
@@ -42,7 +43,7 @@ const handleLogin = () => {
 
 // 注册处理
 const handleRegister = () => {
-  if (!username.value || !password.value || !confirmPassword.value) {
+  if (!email.value || !password.value || !confirmPassword.value || !username.value) {
     errorMessage.value = '请填写所有字段'
     return
   }
@@ -53,8 +54,8 @@ const handleRegister = () => {
   }
 
   const users = getUsers()
-  if (users.some(u => u.username === username.value)) {
-    errorMessage.value = '用户名已存在'
+  if (users.some(u => u.email === email.value)) {
+    errorMessage.value = '该邮箱已被注册'
     return
   }
 
@@ -62,13 +63,14 @@ const handleRegister = () => {
   users.push({
     id: Date.now(),
     username: username.value,
-    password: password.value
+    password: password.value,
+    email: email.value
   })
   saveUsers(users)
 
   // 切换到登录模式
   isLogin.value = true
-  username.value = ''
+  email.value = ''
   password.value = ''
   confirmPassword.value = ''
   errorMessage.value = '注册成功，请登录'
@@ -77,7 +79,7 @@ const handleRegister = () => {
 // 切换登录/注册模式
 const toggleMode = () => {
   isLogin.value = !isLogin.value
-  username.value = ''
+  email.value = ''
   password.value = ''
   confirmPassword.value = ''
   errorMessage.value = ''
@@ -101,6 +103,17 @@ const toggleMode = () => {
       <form class="mt-8 space-y-6" @submit.prevent="isLogin ? handleLogin() : handleRegister()">
         <div class="rounded-md shadow-sm space-y-4">
           <div>
+            <label for="email" class="sr-only">邮箱</label>
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              required
+              class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+              placeholder="邮箱"
+            >
+          </div>
+          <div v-if="!isLogin">
             <label for="username" class="sr-only">用户名</label>
             <input
               id="username"
@@ -133,6 +146,7 @@ const toggleMode = () => {
               placeholder="确认密码"
             >
           </div>
+
         </div>
 
         <div>
@@ -155,4 +169,4 @@ const toggleMode = () => {
       </div>
     </div>
   </div>
-</template> 
+</template>
