@@ -1,2 +1,7 @@
+com/example/todolist/model/User.class
+com/example/todolist/dto/UserRegisterRequest.class
+com/example/todolist/repository/UserRepository.class
+com/example/todolist/controller/AuthController.class
 com/example/todolist/TodoListApplication.class
-com/example/App.class
+com/example/todolist/dto/ApiResponse.class
+com/example/todolist/service/UserService.class

@@ -1,2 +1,7 @@
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/repository/UserRepository.java
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/controller/AuthController.java
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/service/UserService.java
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/dto/UserRegisterRequest.java
 /Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/TodoListApplication.java
-/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/App.java
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/model/User.java
+/Users/yq/Desktop/demo/java_web/java_web_cs2022/backend/todolist/src/main/java/com/example/todolist/dto/ApiResponse.java
