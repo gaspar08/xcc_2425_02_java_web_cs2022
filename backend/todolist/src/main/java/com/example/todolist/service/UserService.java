@@ -14,22 +14,29 @@ public class UserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public User register(UserRegisterRequest request) {
-        try {
-            // 创建新用户
-            User user = new User();
-            user.setUsername(request.getUsername());
-            user.setEmail(request.getEmail().trim());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-            // 保存用户
-            return userRepository.save(user);
-        } catch (Exception e) {
-            // 处理数据库唯一性约束异常
-            if (e.getMessage() != null && e.getMessage().contains("UK_6DOTKOTT2KJSP8VW4D0M25FB7_INDEX_4")) {
-                throw new IllegalArgumentException("邮箱已存在");
-            }
-            throw e;
+    public User login(String email, String password) {
+        User user = userRepository.findByEmail(email);
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("邮箱或密码错误");
         }
+        return user;
+    }
+
+    public User register(UserRegisterRequest request) {
+        String email = request.getEmail().trim();
+        
+        // 检查邮箱是否已存在
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("邮箱已存在");
+        }
+
+        // 创建新用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        // 保存用户
+        return userRepository.save(user);
     }
 }

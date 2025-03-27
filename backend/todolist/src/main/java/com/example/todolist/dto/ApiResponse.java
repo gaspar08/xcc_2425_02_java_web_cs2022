@@ -30,11 +30,7 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> success(T data) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.setCode(200);
-        response.setMessage("success");
-        response.setData(data);
-        return response;
+        return success("success", data);
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
