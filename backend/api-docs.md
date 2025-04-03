@@ -63,22 +63,6 @@ POST /auth/login
 }
 ```
 
-### 用户注销
-
-```http
-POST /auth/logout
-```
-
-**请求头：**
-- Authorization: Bearer {token}
-
-**响应：**
-```json
-{
-  "code": 200,
-  "message": "注销成功"
-}
-```
 
 ## 待办事项接口
 

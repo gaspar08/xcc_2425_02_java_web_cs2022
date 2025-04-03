@@ -13,7 +13,7 @@ const addTodo = () => {
 </script>
 
 <template>
-  <div class="flex gap-4 mb-6">
+  <div class="flex gap-4 mb-6 todo-form">
     <input 
       v-model="newTodo"
       @keyup.enter="addTodo"
@@ -27,4 +27,4 @@ const addTodo = () => {
       添加
     </button>
   </div>
-</template> 
+</template>
