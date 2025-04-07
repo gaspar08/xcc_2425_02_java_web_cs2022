@@ -11,15 +11,15 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'remove', 'edit'])
 
 const isEditing = ref(false)
-const editedContent = ref(props.todo.content)
+const editedContent = ref(props.todo.title)  // 改为 title
 
 const startEdit = () => {
   isEditing.value = true
-  editedContent.value = props.todo.content
+  editedContent.value = props.todo.title     // 改为 title
 }
 
 const saveEdit = () => {
-  if (editedContent.value.trim() && editedContent.value !== props.todo.content) {
+  if (editedContent.value.trim() && editedContent.value !== props.todo.title) {  // 改为 title
     emit('edit', props.todo.id, editedContent.value.trim())
   }
   isEditing.value = false
@@ -27,7 +27,7 @@ const saveEdit = () => {
 
 const cancelEdit = () => {
   isEditing.value = false
-  editedContent.value = props.todo.content
+  editedContent.value = props.todo.title     // 改为 title
 }
 
 const handleKeydown = (e) => {
@@ -55,7 +55,7 @@ const handleKeydown = (e) => {
           'flex-1',
           todo.completed ? 'text-gray-400 line-through' : 'text-gray-700'
         ]"
-      >{{ todo.content }}</span>
+      >{{ todo.title }}</span>                   <!-- 改为 title -->
       <span class="text-sm text-gray-400">{{ todo.createdAt }}</span>
       
       <!-- 操作按钮 -->
@@ -112,4 +112,4 @@ const handleKeydown = (e) => {
 const vFocus = {
   mounted: (el) => el.focus()
 }
-</script> 
+</script>

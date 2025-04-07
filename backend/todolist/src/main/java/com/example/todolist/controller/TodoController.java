@@ -1,6 +1,6 @@
 package com.example.todolist.controller;
 
-import com.example.todolist.dto.ApiResponse;
+import com.example.todolist.dto.*;  // Add new DTOs import
 import com.example.todolist.model.Todo;
 import com.example.todolist.model.User;
 import com.example.todolist.service.TodoService;
@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class TodoController {
@@ -19,7 +20,7 @@ public class TodoController {
     private UserService userService;
 
     @GetMapping("/todos")
-    public ApiResponse<List<Todo>> getTodos(@RequestParam Long userId) {
+    public ApiResponse<TodoListResponse> getTodos(@RequestParam Long userId) {
         try {
             if (userId == null) {
                 return ApiResponse.error(400, "用户ID不能为空");
@@ -31,32 +32,40 @@ public class TodoController {
             }
 
             List<Todo> todos = todoService.getTodosByUser(user);
-            return ApiResponse.success(todos);
+            List<TodoResponse> todoResponses = todos.stream()
+                    .map(TodoResponse::fromTodo)
+                    .collect(Collectors.toList());
+            
+            TodoListResponse response = new TodoListResponse();
+            response.setTotal(todos.size());
+            response.setItems(todoResponses);
+            
+            return ApiResponse.success("获取成功", response);
         } catch (Exception e) {
             return ApiResponse.error(500, "获取待办事项失败：" + e.getMessage());
         }
     }
 
     @PostMapping("/todos")
-    public ApiResponse createTodo(@RequestBody Todo todo, @RequestParam Long userId) {
+    public ApiResponse<TodoResponse> createTodo(@RequestBody TodoCreateRequest request, @RequestParam Long userId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             return ApiResponse.error(401, "用户不存在");
         }
-
-        Todo newTodo = todoService.createTodo(todo.getContent(), user);
-        return ApiResponse.success(newTodo);
+    
+        Todo newTodo = todoService.createTodo(request.getTitle(), user);
+        return ApiResponse.success("创建成功", TodoResponse.fromTodo(newTodo));
     }
 
     @PutMapping("/todos/{id}")
-    public ApiResponse updateTodo(@PathVariable Long id, @RequestBody Todo todo, @RequestParam Long userId) {
+    public ApiResponse<TodoResponse> updateTodo(@PathVariable Long id, @RequestBody TodoUpdateRequest request, @RequestParam Long userId) {
         User user = userService.getUserById(userId);
         if (user == null) {
             return ApiResponse.error(401, "用户不存在");
         }
 
-        Todo updatedTodo = todoService.updateTodo(id, todo.getContent(), todo.isCompleted(), user);
-        return ApiResponse.success(updatedTodo);
+        Todo updatedTodo = todoService.updateTodo(id, request.getTitle(), request.getCompleted(), user);
+        return ApiResponse.success("更新成功", TodoResponse.fromTodo(updatedTodo));
     }
 
     @DeleteMapping("/todos/{id}")

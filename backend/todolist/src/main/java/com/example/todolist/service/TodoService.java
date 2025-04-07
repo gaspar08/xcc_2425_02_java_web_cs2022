@@ -17,14 +17,14 @@ public class TodoService {
         return todoRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
     }
 
-    public Todo createTodo(String content, User user) {
+    public Todo createTodo(String title, User user) {
         Todo todo = new Todo();
-        todo.setContent(content);
+        todo.setTitle(title);
         todo.setUser(user);
         return todoRepository.save(todo);
     }
 
-    public Todo updateTodo(Long id, String content, boolean completed, User user) {
+    public Todo updateTodo(Long id, String title, Boolean completed, User user) {
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
         
@@ -32,7 +32,7 @@ public class TodoService {
             throw new RuntimeException("Unauthorized");
         }
 
-        todo.setContent(content);
+        todo.setTitle(title);  // 改用 setTitle 而不是 setContent
         todo.setCompleted(completed);
         return todoRepository.save(todo);
     }

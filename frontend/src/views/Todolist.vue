@@ -102,18 +102,71 @@ onUnmounted(() => {
 })
 
 // 添加新任务
-const addTodo = (content) => {
-  todos.value.push({
-    id: Date.now(),
-    content,
-    completed: false,
-    createdAt: new Date().toLocaleString()
-  })
+const addTodo = async (content) => {
+  try {
+    const { data } = await axios.post('/api/v1/todos', {
+      title: content
+    }, {
+      params: {
+        userId: currentUser.value.userId
+      }
+    })
+
+    if (data.code === 200) {
+      todos.value.push(data.data)
+    } else {
+      error.value = data.message || '创建待办事项失败'
+    }
+  } catch (err) {
+    console.error('创建待办事项失败:', err)
+    error.value = '创建待办事项失败，请稍后重试'
+  }
 }
 
 // 删除任务
-const removeTodo = (id) => {
-  todos.value = todos.value.filter(todo => todo.id !== id)
+const removeTodo = async (id) => {
+  try {
+    const { data } = await axios.delete(`/api/v1/todos/${id}`, {
+      params: {
+        userId: currentUser.value.userId
+      }
+    })
+
+    if (data.code === 200) {
+      todos.value = todos.value.filter(todo => todo.id !== id)
+    } else {
+      error.value = data.message || '删除待办事项失败'
+    }
+  } catch (err) {
+    console.error('删除待办事项失败:', err)
+    error.value = '删除待办事项失败，请稍后重试'
+  }
+}
+
+// 编辑任务
+const editTodo = async (id, newTitle) => {
+  try {
+    const { data } = await axios.put(`/api/v1/todos/${id}`, {
+      title: newTitle,
+      completed: todos.value.find(todo => todo.id === id)?.completed || false
+    }, {
+      params: {
+        userId: currentUser.value.userId
+      }
+    })
+
+    if (data.code === 200) {
+      const todo = todos.value.find(todo => todo.id === id)
+      if (todo) {
+        todo.title = newTitle
+      }
+    } else {
+      error.value = data.message || '更新待办事项失败'
+    }
+  } catch (err) {
+    console.error('更新待办事项失败:', err)
+    error.value = '更新待办事项失败，请稍后重试'
+  }
 }
 
 // 切换任务状态
@@ -124,13 +177,13 @@ const toggleTodo = (id) => {
   }
 }
 
-// 编辑任务
-const editTodo = (id, newContent) => {
-  const todo = todos.value.find(todo => todo.id === id)
-  if (todo) {
-    todo.content = newContent
-  }
-}
+// 删除这个重复的 editTodo 函数
+// const editTodo = (id, newContent) => {
+//   const todo = todos.value.find(todo => todo.id === id)
+//   if (todo) {
+//     todo.title = newContent
+//   }
+// }
 
 // 筛选任务
 const filteredTodos = computed(() => {

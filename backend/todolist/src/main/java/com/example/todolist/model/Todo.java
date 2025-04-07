@@ -11,7 +11,7 @@ public class Todo {
     private Long id;
 
     @Column(nullable = false)
-    private String content;
+    private String title;
 
     @Column(nullable = false)
     private boolean completed;
@@ -19,12 +19,17 @@ public class Todo {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Todo() {
-        this.createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
         this.completed = false;
     }
 
@@ -36,12 +41,12 @@ public class Todo {
         this.id = id;
     }
 
-    public String getContent() {
-        return content;
+    public String getTitle() {
+        return title;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public boolean isCompleted() {
@@ -58,6 +63,14 @@ public class Todo {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public User getUser() {

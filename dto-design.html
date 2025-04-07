@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DTO 设计图</title>
+</head>
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+    <!-- ApiResponse -->
+    <rect x="50" y="20" width="500" height="80" fill="#e1f5fe" stroke="#01579b" stroke-width="2"/>
+    <text x="60" y="45" font-family="Arial" font-size="16">ApiResponse&lt;T&gt;</text>
+    <text x="60" y="70" font-family="Arial" font-size="14">code: int</text>
+    <text x="60" y="90" font-family="Arial" font-size="14">message: String</text>
+    <text x="200" y="90" font-family="Arial" font-size="14">data: T</text>
+
+    <!-- TodoListResponse -->
+    <rect x="50" y="150" width="500" height="80" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+    <text x="60" y="175" font-family="Arial" font-size="16">TodoListResponse</text>
+    <text x="60" y="200" font-family="Arial" font-size="14">total: int</text>
+    <text x="60" y="220" font-family="Arial" font-size="14">items: List&lt;TodoResponse&gt;</text>
+
+    <!-- TodoResponse -->
+    <rect x="50" y="280" width="500" height="100" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+    <text x="60" y="305" font-family="Arial" font-size="16">TodoResponse</text>
+    <text x="60" y="330" font-family="Arial" font-size="14">id: Long</text>
+    <text x="200" y="330" font-family="Arial" font-size="14">title: String</text>
+    <text x="60" y="350" font-family="Arial" font-size="14">completed: boolean</text>
+    <text x="60" y="370" font-family="Arial" font-size="14">createdAt: String</text>
+    <text x="200" y="370" font-family="Arial" font-size="14">updatedAt: String</text>
+
+    <!-- Arrows -->
+    <path d="M300 100 L300 150" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M300 230 L300 280" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+    <!-- Arrow marker definition -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+        </marker>
+    </defs>
+</svg>
+</body>
+</html>
