@@ -1,44 +1,55 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    currentUser: JSON.parse(localStorage.getItem('currentUser')),
-    users: JSON.parse(localStorage.getItem('users')) || []
+    userId: null,
+    username: null,
+    token: null
   }),
-
   actions: {
-    login(username, password) {
-      const user = this.users.find(u => u.username === username && u.password === password)
-      if (user) {
-        this.currentUser = user
-        localStorage.setItem('currentUser', JSON.stringify(user))
+    setUser(userData) {
+      this.userId = userData.userId
+      this.username = userData.username
+      this.token = userData.token
+      
+      // 保存到 localStorage
+      localStorage.setItem('token', userData.token)
+      localStorage.setItem('user', JSON.stringify({
+        userId: userData.userId,
+        username: userData.username
+      }))
+      
+      // 设置 axios 请求头
+      axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`
+    },
+    
+    clearUser() {
+      this.userId = null
+      this.username = null
+      this.token = null
+      
+      // 清除 localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      
+      // 清除 axios 请求头
+      delete axios.defaults.headers.common['Authorization']
+    },
+    
+    initializeFromStorage() {
+      const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user'))
+      
+      if (token && user) {
+        this.setUser({
+          userId: user.userId,
+          username: user.username,
+          token: token
+        })
         return true
       }
       return false
-    },
-
-    register(username, password) {
-      if (this.users.some(u => u.username === username)) {
-        return false
-      }
-
-      const newUser = {
-        id: Date.now(),
-        username,
-        password
-      }
-      this.users.push(newUser)
-      localStorage.setItem('users', JSON.stringify(this.users))
-      return true
-    },
-
-    logout() {
-      this.currentUser = null
-      localStorage.removeItem('currentUser')
     }
-  },
-
-  getters: {
-    isLoggedIn: (state) => !!state.currentUser
   }
-}) 
+})

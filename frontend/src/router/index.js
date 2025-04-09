@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
@@ -21,30 +22,25 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫
 router.beforeEach((to, from, next) => {
-  const currentUser = localStorage.getItem('currentUser')
+  const userStore = useUserStore()
   
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    // 需要登录的路由
-    if (!currentUser) {
-      // 未登录，重定向到登录页
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      })
-    } else {
-      next()
-    }
-  } else {
-    // 不需要登录的路由
-    if (currentUser && to.path === '/login') {
-      // 已登录用户访问登录页，重定向到待办事项页面
-      next('/todolist')
-    } else {
-      next()
-    }
+  // 尝试从 localStorage 恢复用户状态
+  const isLoggedIn = userStore.token || userStore.initializeFromStorage()
+  
+  // 需要登录的路由
+  if (to.path === '/todolist' && !isLoggedIn) {
+    next('/login')
+    return
   }
+  
+  // 已登录用户访问登录页
+  if (to.path === '/login' && isLoggedIn) {
+    next('/todolist')
+    return
+  }
+  
+  next()
 })
 
 export default router

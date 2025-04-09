@@ -1,265 +1,201 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
-import TodoItem from '../components/TodoItem.vue'
-import TodoForm from '../components/TodoForm.vue'
-import TodoFilter from '../components/TodoFilter.vue'
+import { PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const currentUser = ref(null)
-const todos = ref([])
-const filter = ref('all') // 筛选状态：all, active, completed
-const isLoading = ref(true)
-const error = ref(null)
+const userStore = useUserStore()
 
-// 从localStorage加载用户数据
-const loadUserData = () => {
-  try {
-    const userStr = localStorage.getItem('currentUser')
-    if (!userStr) {
-      error.value = '用户未登录'
-      setTimeout(() => router.push('/login'), 2000)
-      return
-    }
-    currentUser.value = JSON.parse(userStr)
-    //console.log('当前用户数据:', currentUser.value) // 打印当前用户数据，用于调试
-  } catch (err) {
-    console.error('解析用户数据失败:', err)
-    error.value = '获取用户信息失败，请重新登录'
-    setTimeout(() => router.push('/login'), 2000)
-  }
+// 添加登出函数
+const handleLogout = () => {
+  userStore.clearUser()
+  router.push('/login')
 }
 
-// 从后端加载待办事项数据
-const loadTodos = async () => {
-  error.value = null
-  isLoading.value = true
+const todos = ref([])
+const newTodo = ref('')
+const isLoading = ref(false)
+
+// 获取待办事项列表
+const fetchTodos = async () => {
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
-    //console.log('id:', currentUser.value.id) 
+    isLoading.value = true
     const { data } = await axios.get('/api/v1/todos', {
-      signal: controller.signal,
       params: {
-        userId: currentUser.value.userId
+        userId: userStore.userId
       }
     })
     
-    clearTimeout(timeoutId)
-    
     if (data.code === 200) {
-      todos.value = data.data?.items || []
-    } else {
-      error.value = data.message || '获取待办事项失败'
+      todos.value = data.data.items
     }
-  } catch (err) {
-    console.error('获取待办事项失败:', err)
-    if (err.name === 'AbortError') {
-      error.value = '获取待办事项超时，请检查网络连接'
-    } else {
-      error.value = '获取待办事项失败，请稍后重试'
-    }
+  } catch (error) {
+    console.error('获取待办事项失败:', error)
   } finally {
     isLoading.value = false
   }
 }
 
-// 退出登录
-const logout = () => {
-  localStorage.removeItem('currentUser')
-  router.push('/login')
-}
-
-// 在组件挂载时加载数据
-onMounted(async () => {
-  await loadUserData()
-  if (currentUser.value) {
-    await loadTodos()
-  }
-})
-
-// 禁止键盘缩放
-const disableZoom = (e) => {
-  if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=' || e.wheelDelta)) {
-    e.preventDefault()
-    return false
-  }
-}
-
-// 在组件挂载时添加事件监听
-onMounted(() => {
-  // 禁止Ctrl/Cmd + 滚轮缩放
-  window.addEventListener('wheel', disableZoom, { passive: false })
-  // 禁止Ctrl/Cmd + +/- 缩放
-  window.addEventListener('keydown', disableZoom)
-})
-
-// 在组件卸载时移除事件监听
-onUnmounted(() => {
-  window.removeEventListener('wheel', disableZoom)
-  window.removeEventListener('keydown', disableZoom)
-})
-
-// 添加新任务
-const addTodo = async (content) => {
+// 添加新待办事项
+const addTodo = async () => {
+  if (!newTodo.value.trim()) return
+  
   try {
     const { data } = await axios.post('/api/v1/todos', {
-      title: content
+      title: newTodo.value
     }, {
       params: {
-        userId: currentUser.value.userId
+        userId: userStore.userId
       }
     })
-
+    
     if (data.code === 200) {
       todos.value.push(data.data)
-    } else {
-      error.value = data.message || '创建待办事项失败'
+      newTodo.value = ''
     }
-  } catch (err) {
-    console.error('创建待办事项失败:', err)
-    error.value = '创建待办事项失败，请稍后重试'
+  } catch (error) {
+    console.error('添加待办事项失败:', error)
   }
 }
 
-// 删除任务
-const removeTodo = async (id) => {
+const editingTodo = ref(null)
+const editContent = ref('')
+
+// 删除待办事项
+const deleteTodo = async (id) => {
   try {
     const { data } = await axios.delete(`/api/v1/todos/${id}`, {
-      params: {
-        userId: currentUser.value.userId
-      }
+      params: { userId: userStore.userId }
     })
-
+    
     if (data.code === 200) {
       todos.value = todos.value.filter(todo => todo.id !== id)
-    } else {
-      error.value = data.message || '删除待办事项失败'
     }
-  } catch (err) {
-    console.error('删除待办事项失败:', err)
-    error.value = '删除待办事项失败，请稍后重试'
+  } catch (error) {
+    console.error('删除待办事项失败:', error)
   }
 }
 
-// 编辑任务
-const editTodo = async (id, newTitle) => {
+// 开始编辑
+const startEdit = (todo) => {
+  editingTodo.value = todo.id
+  editContent.value = todo.title
+}
+
+// 保存编辑
+const saveEdit = async (todo) => {
   try {
-    const { data } = await axios.put(`/api/v1/todos/${id}`, {
-      title: newTitle,
-      completed: todos.value.find(todo => todo.id === id)?.completed || false
+    const { data } = await axios.put(`/api/v1/todos/${todo.id}`, {
+      title: editContent.value,
+      completed: todo.completed
     }, {
-      params: {
-        userId: currentUser.value.userId
-      }
+      params: { userId: userStore.userId }
     })
-
+    
     if (data.code === 200) {
-      const todo = todos.value.find(todo => todo.id === id)
-      if (todo) {
-        todo.title = newTitle
-      }
-    } else {
-      error.value = data.message || '更新待办事项失败'
+      const index = todos.value.findIndex(t => t.id === todo.id)
+      todos.value[index] = data.data
+      editingTodo.value = null
     }
-  } catch (err) {
-    console.error('更新待办事项失败:', err)
-    error.value = '更新待办事项失败，请稍后重试'
+  } catch (error) {
+    console.error('更新待办事项失败:', error)
   }
 }
 
-// 切换任务状态
-const toggleTodo = (id) => {
-  const todo = todos.value.find(todo => todo.id === id)
-  if (todo) {
-    todo.completed = !todo.completed
-  }
-}
-
-// 删除这个重复的 editTodo 函数
-// const editTodo = (id, newContent) => {
-//   const todo = todos.value.find(todo => todo.id === id)
-//   if (todo) {
-//     todo.title = newContent
-//   }
-// }
-
-// 筛选任务
-const filteredTodos = computed(() => {
-  switch (filter.value) {
-    case 'active':
-      return todos.value.filter(todo => !todo.completed)
-    case 'completed':
-      return todos.value.filter(todo => todo.completed)
-    default:
-      return todos.value
-  }
+onMounted(() => {
+  fetchTodos()
 })
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto p-6">
+  <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">待办事项</h1>
-      <div class="flex items-center gap-4">
-        <span class="text-gray-600">{{ currentUser?.username || '加载中...' }}</span>
+      <h1 class="text-2xl font-bold">待办事项</h1>
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-600">欢迎, {{ userStore.username }}</span>
         <button 
-          @click="logout"
-          class="px-4 py-2 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+          @click="handleLogout"
+          class="text-gray-500 hover:text-gray-700"
+          title="登出"
         >
-          退出登录
+          <ArrowRightOnRectangleIcon class="h-6 w-6" />
         </button>
       </div>
     </div>
-    
+
+    <!-- 添加新待办事项 -->
+    <div class="mb-6">
+      <form @submit.prevent="addTodo" class="flex">
+        <input 
+          v-model="newTodo" 
+          type="text" 
+          placeholder="添加新的待办事项..." 
+          class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+        <button 
+          type="submit" 
+          class="bg-green-500 text-white px-4 py-2 rounded-r-lg hover:bg-green-600 focus:outline-none"
+        >
+          添加
+        </button>
+      </form>
+    </div>
+
     <!-- 加载状态 -->
-    <div v-if="isLoading" class="flex justify-center items-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+    <div v-if="isLoading" class="text-center py-4">
+      <p class="text-gray-500">加载中...</p>
     </div>
 
-    <!-- 错误提示 -->
-    <div v-else-if="error" class="text-center py-8 text-red-500">
-      {{ error }}
-    </div>
-
-    <template v-else>
-      <!-- 添加任务表单 -->
-      <TodoForm @add="addTodo" />
-
-      <!-- 任务筛选 -->
-      <TodoFilter v-model:filter="filter" :current-filter="filter" />
-
-      <!-- 空状态 -->
-      <div v-if="todos.length === 0" class="text-center py-12 text-gray-500 bg-gray-50 rounded-lg shadow-sm border border-gray-100">
-        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-        </svg>
-        <p class="text-xl font-medium mb-3">还没有待办事项</p>
-        <p class="text-sm mb-6">创建你的第一个待办事项，开始规划你的一天吧！</p>
-        <button 
-          @click="document.querySelector('.todo-form input').focus()"
-          class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-300"
-        >
-          添加新待办
-        </button>
+    <!-- 待办事项列表 -->
+    <div v-else-if="todos.length > 0" class="space-y-4">
+      <div v-for="todo in todos" :key="todo.id" class="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+        <!-- 编辑模式 -->
+        <div v-if="editingTodo === todo.id" class="flex-1 flex space-x-2">
+          <input 
+            v-model="editContent"
+            type="text"
+            class="flex-1 p-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            @keyup.enter="saveEdit(todo)"
+          >
+          <button 
+            @click="saveEdit(todo)"
+            class="text-green-500 hover:text-green-700"
+          >
+            <CheckIcon class="h-5 w-5" />
+          </button>
+          <button 
+            @click="editingTodo = null"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <XMarkIcon class="h-5 w-5" />
+          </button>
+        </div>
+        
+        <!-- 显示模式 -->
+        <span v-else>{{ todo.title }}</span>
+        <div v-if="editingTodo !== todo.id" class="flex space-x-3">
+          <button 
+            @click="startEdit(todo)"
+            class="text-blue-500 hover:text-blue-700"
+          >
+            <PencilIcon class="h-5 w-5" />
+          </button>
+          <button 
+            @click="deleteTodo(todo.id)"
+            class="text-red-500 hover:text-red-700"
+          >
+            <TrashIcon class="h-5 w-5" />
+          </button>
+        </div>
       </div>
+    </div>
 
-      <!-- 任务列表 -->
-      <ul v-else class="space-y-3">
-        <TodoItem
-          v-for="todo in filteredTodos"
-          :key="todo.id"
-          :todo="todo"
-          @toggle="toggleTodo"
-          @remove="removeTodo"
-          @edit="editTodo"
-        />
-      </ul>
-    </template>
+    <!-- 空状态 -->
+    <div v-else class="text-center py-10 bg-gray-50 rounded-lg">
+      <p class="text-gray-500 mb-4">您还没有待办事项</p>
+      <p class="text-gray-400">使用上方的输入框添加您的第一个待办事项</p>
+    </div>
   </div>
 </template>
-
-<style scoped>
-/* 移除所有CSS样式，因为我们现在使用Tailwind CSS */
-</style>

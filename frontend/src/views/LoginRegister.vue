@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const isLogin = ref(true) // true为登录模式，false为注册模式
 const email = ref('')
 const password = ref('')
@@ -24,15 +26,23 @@ const handleLogin = async () => {
       password: password.value
     })
     
+    // 登录处理中的保存逻辑修改为：
     if (data.code != 200) {
       errorMessage.value = data.message || '邮箱或密码错误'
       return
     }
-    // 保存用户信息到localStorage
-    localStorage.setItem('currentUser', JSON.stringify(data.data))
-    // 登录成功，先设置成功消息
+
+    // 保存到 pinia store
+    userStore.setUser({
+      userId: data.data.userId,
+      username: data.data.username,
+      token: data.data.token
+    })
+
+    // 设置 axios 默认请求头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.data.token}`
+
     errorMessage.value = '登录成功'
-    // 等待一小段时间后再跳转，让用户看到成功消息
     setTimeout(() => {
       router.push('/todolist')
     }, 1000)

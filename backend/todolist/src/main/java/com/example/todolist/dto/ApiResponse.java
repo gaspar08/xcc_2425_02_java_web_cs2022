@@ -47,4 +47,17 @@ public class ApiResponse<T> {
         response.setMessage(message);
         return response;
     }
+
+    // 添加 JWT 相关的响应方法
+    public static <T> ApiResponse<T> unauthorized(String message) {
+        return error(401, message);
+    }
+
+    public static <T> ApiResponse<T> invalidToken() {
+        return unauthorized("无效的token");
+    }
+
+    public static <T> ApiResponse<T> tokenExpired() {
+        return unauthorized("token已过期，请重新登录");
+    }
 }
