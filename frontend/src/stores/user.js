@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import request from '@/utils/request'  // 改用封装的 request
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -21,7 +21,8 @@ export const useUserStore = defineStore('user', {
       }))
       
       // 设置 axios 请求头
-      axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`
+      // 移除这行，因为已经在 request 拦截器中处理
+      // axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`
     },
     
     clearUser() {
@@ -34,9 +35,11 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('user')
       
       // 清除 axios 请求头
-      delete axios.defaults.headers.common['Authorization']
+      // 移除这行，因为已经在 request 拦截器中处理
+      // delete axios.defaults.headers.common['Authorization']
     },
     
+    // 确保方法名完全一致
     initializeFromStorage() {
       const token = localStorage.getItem('token')
       const user = JSON.parse(localStorage.getItem('user'))

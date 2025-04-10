@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import request from '@/utils/request'  // 改用封装的 request
 import { PencilIcon, TrashIcon, CheckIcon, XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
 
@@ -22,10 +22,8 @@ const isLoading = ref(false)
 const fetchTodos = async () => {
   try {
     isLoading.value = true
-    const { data } = await axios.get('/api/v1/todos', {
-      params: {
-        userId: userStore.userId
-      }
+    const { data } = await request.get('/api/v1/todos', {
+      params: { userId: userStore.userId }
     })
     
     if (data.code === 200) {
@@ -43,7 +41,7 @@ const addTodo = async () => {
   if (!newTodo.value.trim()) return
   
   try {
-    const { data } = await axios.post('/api/v1/todos', {
+    const { data } = await request.post('/api/v1/todos', {
       title: newTodo.value
     }, {
       params: {
@@ -66,7 +64,7 @@ const editContent = ref('')
 // 删除待办事项
 const deleteTodo = async (id) => {
   try {
-    const { data } = await axios.delete(`/api/v1/todos/${id}`, {
+    const { data } = await request.delete(`/api/v1/todos/${id}`, {
       params: { userId: userStore.userId }
     })
     
@@ -87,7 +85,7 @@ const startEdit = (todo) => {
 // 保存编辑
 const saveEdit = async (todo) => {
   try {
-    const { data } = await axios.put(`/api/v1/todos/${todo.id}`, {
+    const { data } = await request.put(`/api/v1/todos/${todo.id}`, {
       title: editContent.value,
       completed: todo.completed
     }, {

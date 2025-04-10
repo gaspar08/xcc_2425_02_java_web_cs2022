@@ -1,3 +1,52 @@
+# Axios 改造为 Request 实例的总结
+(在commit_id为co1e1e39c的那次提交的基础上进行的修改)
+## 改造原因
+- 统一管理请求配置
+- 集中处理 token 认证
+- 通过拦截器统一处理请求头
+- 避免重复代码
+- 便于后期维护
+
+## 具体步骤
+
+### 1. 创建请求实例
+在 <mcfile name="utils/request.js" path="/Users/yq/Desktop/demo/java_web/java_web_cs2022/frontend/src/utils/request.js"></mcfile> 中：
+```javascript
+import axios from 'axios'
+
+const request = axios.create()
+
+request.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+export default request
+```
+
+### 2. 修改 Store
+在 <mcfile name="stores/user.js" path="/Users/yq/Desktop/demo/java_web/java_web_cs2022/frontend/src/stores/user.js"></mcfile> 中移除手动设置 token 的代码。
+
+### 3. 更新组件
+修改所有使用 axios 的组件：
+- 更新导入语句
+- 替换请求方法
+- 移除手动的请求头管理
+
+## 主要改动
+```diff
+- import axios from 'axios'
++ import request from '@/utils/request'
+
+- axios.get('/api/...')
++ request.get('/api/...')
+```
+
+这样的改造使得代码更加模块化，也更符合最佳实践。
+
 # Tailwind CSS 配置过程总结
 
 ## 目标
